@@ -57,3 +57,62 @@ jobs:
         run: |
           npm install -g wrangler
           wrangler deploy # Deploy without environment flag for production
+name: Deploy to Cloudflare Workers
+
+# Trigger the workflow on push to main (production) or develop (staging) branch
+on:
+  push:
+    branches:
+      - main     # Production branch
+      - develop  # Staging branch
+
+jobs:
+  # Job for deploying to Staging
+  deploy-staging:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/develop' # Only run this job for the develop branch
+
+    steps:
+      # Step 1: Check out the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      # Step 2: Set up Node.js
+      - name: Setup NodeJS
+        uses: actions/setup-node@v1
+        with:
+          node-version: '18' # Use a recent stable Node.js version
+
+      # Step 3: Deploy to Staging via Cloudflare Workers
+      - name: Deploy to Staging via Cloudflare Workers
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }} # Using the same API token
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          npm install -g wrangler
+          wrangler deploy --env staging # Deploy with the staging environment
+
+  # Job for deploying to Production
+  deploy-production:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' # Only run this job for the main branch
+
+    steps:
+      # Step 1: Check out the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      # Step 2: Set up Node.js
+      - name: Setup NodeJS
+        uses: actions/setup-node@v1
+        with:
+          node-version: '18'
+
+      # Step 3: Deploy to Production via Cloudflare Workers
+      - name: Deploy to Production via Cloudflare Workers
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }} # Using the same API token
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          npm install -g wrangler
+          wrangler deploy --env production # Deploy with the production environment
