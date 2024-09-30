@@ -1,15 +1,13 @@
 name = "nodematiclabs"  # Base name for your Worker
-compatibility_date = "2024-09-30" # Update this to the current date
-workers_dev = true
+compatibility_date = "2024-09-30"
+workers_dev = true  # Ensure deployment under the workers.dev subdomain
 
 # Define the Staging environment
 [env.staging]
-name = "nodematiclabs-staging" # Unique name for the staging environment
-route = "" # Use this if you want to deploy to a custom domain; leave blank for workers.dev
-# Optional: Add other environment-specific settings here
+name = "nodematiclabs-staging" # This will create a unique link for staging (e.g., nodematiclabs-staging.<your-workers-subdomain>.workers.dev)
+workers_dev = true
 
 # Define the Production environment
 [env.production]
-name = "nodematiclabs-prod" # Unique name for the production environment
-route = "" # Use this if you want to deploy to a custom domain; leave blank for workers.dev
-# Optional: Add other environment-specific settings here
+name = "nodematiclabs-prod" # This will create a unique link for production (e.g., nodematiclabs-prod.<your-workers-subdomain>.workers.dev)
+workers_dev = true
