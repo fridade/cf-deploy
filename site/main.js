@@ -27,7 +27,7 @@ addEventListener("fetch", (event) => {
 // A simple request handler function
 async function handleRequest(request) {
     // Example: Returning a simple HTML response
-    return new Response("Hello, Cloudflare Workers that good Fritzolo for the dev!", {
+    return new Response("Hello, Cloudflare Workers that good Fritzolo1 for the dev!", {
         headers: { "Content-Type": "text/html" },
     });
 }
