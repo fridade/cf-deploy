@@ -1,13 +1,17 @@
 name = "nodematiclabs"  # Base name for your Worker
 compatibility_date = "2024-09-30"
-workers_dev = true  # Ensure deployment under the workers.dev subdomain
+workers_dev = true
+main = "site/main.js" # Specify the path to your main entry-point script
 
 # Define the Staging environment
 [env.staging]
-name = "nodematiclabs-staging" # This will create a unique link for staging (e.g., nodematiclabs-staging.<your-workers-subdomain>.workers.dev)
+name = "nodematiclabs-staging"
 workers_dev = true
+main = "site/main.js" # Specify the path to your main entry-point script for staging
 
 # Define the Production environment
 [env.production]
-name = "nodematiclabs-prod" # This will create a unique link for production (e.g., nodematiclabs-prod.<your-workers-subdomain>.workers.dev)
+name = "nodematiclabs-prod"
 workers_dev = true
+main = "site/main.js" # Specify the path to your main entry-point script for production
+
