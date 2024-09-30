@@ -1,7 +1,11 @@
-name = "nodematiclabs"
+name = "simple-cloudflare-worker"
 compatibility_date = "2024-09-30"
 workers_dev = true
-main = "site/main.js" # Ensure this points to the correct file
 
-[site]
-bucket = "./site" # Ensure this points to your static files directory
+[env.staging]
+name = "simple-cloudflare-worker-staging" # Use a different name for staging deployment
+route = "" # Set a route if deploying to a custom domain in staging
+
+[env.production]
+name = "simple-cloudflare-worker-prod" # Use the original or a different name for production
+route = "" # Set a route if deploying to a custom domain in production

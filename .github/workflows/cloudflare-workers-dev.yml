@@ -1,36 +1,59 @@
-name: Cloudflare Workers Deployment
+name: Deploy to Cloudflare Workers
 
-# This workflow will run whenever there is a push or pull request on the main branch
+# Trigger the workflow on push to main (production) or develop (staging) branch
 on:
   push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+    branches:
+      - main     # Production branch
+      - develop  # Staging branch
 
 jobs:
-  deploy:
-    # This job will run on the latest Ubuntu runner
+  # Job for deploying to Staging
+  deploy-staging:
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/develop' # Only run this job for the develop branch
 
     steps:
       # Step 1: Check out the repository
       - name: Checkout Repository
         uses: actions/checkout@v2
-        with:
-          submodules: 'true' # Ensures any submodules are checked out
 
-      # Step 2: Set up Node.js environment
+      # Step 2: Set up Node.js
       - name: Setup NodeJS
         uses: actions/setup-node@v1
         with:
-          node-version: '18' # Updated to a more recent Node.js version
+          node-version: '18'
 
-      # Step 3: Deploy via Cloudflare Workers
-      - name: Deploy via Cloudflare Workers
+      # Step 3: Deploy to Cloudflare Workers (Staging)
+      - name: Deploy to Staging via Cloudflare Workers
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }} # Ensure this secret is correctly set in GitHub Secrets
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.   CLOUDFLARE_ACCOUNT_ID }} # Ensure this secret is correctly set in GitHub Secrets
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN_STAGING }} # Staging API token
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          npm uninstall -g @cloudflare/wrangler # Uninstall old version if previously installed
-          npm install -g wrangler # Install the latest Wrangler version (v2.x)
-          wrangler deploy # Updated to use deploy instead of publish
+          npm install -g wrangler
+          wrangler deploy --env staging # Use a specific environment (e.g., wrangler.toml configuration)
+
+  # Job for deploying to Production
+  deploy-production:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' # Only run this job for the main branch
+
+    steps:
+      # Step 1: Check out the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      # Step 2: Set up Node.js
+      - name: Setup NodeJS
+        uses: actions/setup-node@v1
+        with:
+          node-version: '18'
+
+      # Step 3: Deploy to Cloudflare Workers (Production)
+      - name: Deploy to Production via Cloudflare Workers
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN_PROD }} # Production API token
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          npm install -g wrangler
+          wrangler deploy # Deploy without environment flag for production
