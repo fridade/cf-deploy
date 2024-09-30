@@ -1,38 +1,33 @@
 name: Cloudflare Workers
 
-# Controls when the action will run. Triggers the workflow on push or pull request
-# events but only for the master branch
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "deploy"
   deploy:
-    # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-    - uses: actions/checkout@v2
-      with:
-        submodules: 'true'
+      # Check out the repository
+      - uses: actions/checkout@v2
+        with:
+          submodules: 'true'
 
-    # Setup npm
-    - name: Setup NodeJS
-      uses: actions/setup-node@v1
-      with:
-        node-version: '12'
+      # Setup Node.js environment
+      - name: Setup NodeJS
+        uses: actions/setup-node@v1
+        with:
+          node-version: '18' # Use the latest stable version of Node.js
 
-    # Deploy
-    - name: Deploy via CloudFlare Workers
-      env:
-        CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
-        CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-      run: |
-        npm i @cloudflare/wrangler -g
-        wrangler publish
+      # Deploy using the latest Wrangler
+      - name: Deploy via Cloudflare Workers
+        env:
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+        run: |
+          npm uninstall -g @cloudflare/wrangler # Uninstall old version if previously installed
+          npm install -g wrangler # Install the latest Wrangler version (v2.x)
+          wrangler publish
