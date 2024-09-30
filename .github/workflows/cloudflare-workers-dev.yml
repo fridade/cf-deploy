@@ -1,5 +1,6 @@
-name: Cloudflare Workers
+name: Cloudflare Workers Deployment
 
+# This workflow will run whenever there is a push or pull request on the main branch
 on:
   push:
     branches: [main]
@@ -8,26 +9,28 @@ on:
 
 jobs:
   deploy:
+    # This job will run on the latest Ubuntu runner
     runs-on: ubuntu-latest
 
     steps:
-      # Check out the repository
-      - uses: actions/checkout@v2
+      # Step 1: Check out the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v2
         with:
-          submodules: 'true'
+          submodules: 'true' # Ensures any submodules are checked out
 
-      # Setup Node.js environment
+      # Step 2: Set up Node.js environment
       - name: Setup NodeJS
         uses: actions/setup-node@v1
         with:
-          node-version: '18' # Use the latest stable version of Node.js
+          node-version: '18' # Updated to a more recent Node.js version
 
-      # Deploy using the latest Wrangler
+      # Step 3: Deploy via Cloudflare Workers
       - name: Deploy via Cloudflare Workers
         env:
-          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
-          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }} # Ensure this secret is correctly set in GitHub Secrets
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }} # Ensure this secret is correctly set in GitHub Secrets
         run: |
           npm uninstall -g @cloudflare/wrangler # Uninstall old version if previously installed
           npm install -g wrangler # Install the latest Wrangler version (v2.x)
-          wrangler publish
+          wrangler deploy # Updated to use deploy instead of publish
