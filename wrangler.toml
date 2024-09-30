@@ -1,9 +1,7 @@
 name = "nodematiclabs"
-compatibility_date = "2024-09-30" # Required for wrangler v2.x
-workers_dev = true # Keep this true if you're deploying to *.workers.dev subdomain
-
-# Specify the correct path to your entry-point JavaScript file
-main = "site/main.js"  # Ensure this path points to your actual main JavaScript file
+compatibility_date = "2024-09-30"
+workers_dev = true
+main = "site/main.js" # Ensure this points to the correct file
 
 [site]
-bucket = "./site" # This should be the directory containing your static site assets
+bucket = "./site" # Ensure this points to your static files directory
