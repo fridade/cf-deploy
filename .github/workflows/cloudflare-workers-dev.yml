@@ -1,36 +1,110 @@
 name: Cloudflare Workers Deployment
 
-# This workflow will run whenever there is a push or pull request on the main branch
+# Trigger the workflow on pushes to the main, develop branches, and pull request events
 on:
   push:
-    branches: [main]
+    branches:
+      - main     # Production branch
+      - develop  # Staging branch
   pull_request:
-    branches: [main]
+    types: [opened, synchronize, reopened, closed] # Trigger on various PR events
 
 jobs:
-  deploy:
-    # This job will run on the latest Ubuntu runner
+  # Deploy for staging and production
+  deploy-staging-prod:
     runs-on: ubuntu-latest
+    if: github.event_name == 'push' # Only run this job for branch pushes
 
     steps:
-      # Step 1: Check out the repository
       - name: Checkout Repository
         uses: actions/checkout@v2
-        with:
-          submodules: 'true' # Ensures any submodules are checked out
 
-      # Step 2: Set up Node.js environment
       - name: Setup NodeJS
         uses: actions/setup-node@v1
         with:
-          node-version: '18' # Updated to a more recent Node.js version
+          node-version: '18'
 
-      # Step 3: Deploy via Cloudflare Workers
-      - name: Deploy via Cloudflare Workers
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }} # Ensure this secret is correctly set in GitHub Secrets
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.   CLOUDFLARE_ACCOUNT_ID }} # Ensure this secret is correctly set in GitHub Secrets
+      # Determine the branch and environment
+      - name: Determine Environment
+        id: env
         run: |
-          npm uninstall -g @cloudflare/wrangler # Uninstall old version if previously installed
-          npm install -g wrangler # Install the latest Wrangler version (v2.x)
-          wrangler deploy # Updated to use deploy instead of publish
+          if [ "${GITHUB_REF##*/}" == "develop" ]; then
+            echo "::set-output name=environment::staging"
+          elif [ "${GITHUB_REF##*/}" == "main" ]; then
+            echo "::set-output name=environment::production"
+          fi
+
+      # Deploy to the correct environment
+      - name: Deploy to Cloudflare Workers
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          npm install -g wrangler
+          wrangler deploy --env ${{ steps.env.outputs.environment }} # Deploy based on the branch (staging or production)
+
+  # Job for deploying the PR environment
+  deploy-pr-env:
+    if: github.event_name == 'pull_request' && github.event.action != 'closed'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Setup NodeJS
+        uses: actions/setup-node@v1
+        with:
+          node-version: '18' # Use a recent stable Node.js version
+
+      # Extract Short SHA1 for subdomain
+      - name: Extract Commit SHA
+        id: vars
+        run: echo "::set-output name=short_sha::$(git rev-parse --short $GITHUB_SHA)"
+      
+      # Deploy all Cloudflare Workers related to the project
+      - name: Deploy Cloudflare Workers to Temporary Subdomain
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          npm install -g wrangler
+          wrangler deploy --name nodematiclabs-${{ steps.vars.outputs.short_sha }} --env staging # Deploy using the commit SHA
+
+      # Deploy the showcase project to a separate subdomain
+      - name: Deploy Showcase Project
+        run: |
+          echo "Showcase project deployed at showcase-${{ steps.vars.outputs.short_sha }}.fritzdamiend.workers.dev"
+
+  # Job for cleaning up the PR environment upon merging/deleting
+  cleanup-pr-env:
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Setup NodeJS
+        uses: actions/setup-node@v1
+        with:
+          node-version: '18'
+
+      # Extract Short SHA1 for subdomain
+      - name: Extract Commit SHA
+        id: vars
+        run: echo "::set-output name=short_sha::$(git rev-parse --short $GITHUB_SHA)"
+
+      # Delete Cloudflare Worker
+      - name: Delete Cloudflare Workers Environment
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          npm install -g wrangler
+          wrangler delete nodematiclabs-${{ steps.vars.outputs.short_sha }} --yes # Use --yes to confirm deletion
+
+      # Clean up the showcase project resources
+      - name: Cleanup Showcase Project
+        run: |
+          echo "Cleaning up showcase project for subdomain showcase-${{ steps.vars.outputs.short_sha }}.fritzdamiend.workers.dev"
