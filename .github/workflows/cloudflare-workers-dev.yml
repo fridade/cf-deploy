@@ -43,6 +43,31 @@ jobs:
           npm install -g wrangler
           wrangler deploy --env ${{ steps.env.outputs.environment }} # Deploy based on the branch (staging or production)
 
+
+  delete-workers:
+      runs-on: ubuntu-latest
+      steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: List and delete all workers
+        env:
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+        run: |
+          # Step 1: List all workers
+          WORKERS_LIST=$(curl -X GET "https://api.cloudflare.com/client/v4/accounts/$CF_ACCOUNT_ID/workers/scripts" \
+            -H "Authorization: Bearer $CF_API_TOKEN" \
+            -H "Content-Type: application/json" | jq -r '.result[].id')
+          
+          # Step 2: Loop through each worker and delete it
+          for WORKER in $WORKERS_LIST; do
+            echo "Deleting worker: $WORKER"
+            curl -X DELETE "https://api.cloudflare.com/client/v4/accounts/$CF_ACCOUNT_ID/workers/scripts/$WORKER" \
+              -H "Authorization: Bearer $CF_API_TOKEN" \
+              -H "Content-Type: application/json"
+          done
+
   # Job for deploying the PR environment
   deploy-pr-env:
     if: github.event_name == 'pull_request' && github.event.action != 'closed'
